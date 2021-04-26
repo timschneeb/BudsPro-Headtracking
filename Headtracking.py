@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 """
-A python script to get battery level from Samsung Galaxy Buds devices
+A python script to stream head-tracking data from the Samsung Galaxy Buds Pro
 """
 
 # License: MIT
 # Author: @ThePBone
-# 06/30/2020
+# 04/26/2021
 import time
 
 import bluetooth
