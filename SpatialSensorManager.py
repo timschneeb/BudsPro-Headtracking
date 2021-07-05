@@ -1,6 +1,7 @@
 from BluetoothService import BluetoothService
 from RepeatedTimer import RepeatedTimer
 
+import struct
 
 class SpatialSensorManager:
     def __init__(self, socket, data_callback, verbose=False, debug=False):
@@ -50,8 +51,9 @@ class SpatialSensorManager:
                     i3 += (byte[i + i4] & 255) << (((i2 - 1) - i4) * 8)
                     i4 += 1
             else:
-                i3 += (byte[i + i4] & 255) << (i4 * 8)
-                i4 += 1
+                while i4 < i2:
+                    i3 += (byte[i + i4] & 255) << (i4 * 8)
+                    i4 += 1
             return i3
         else:
             return -2
@@ -71,10 +73,17 @@ class SpatialSensorManager:
                 # For more information refer to https://github.com/ThePBone/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/Decoder/SpatialAudioDataParser.cs#L56
                 print("Received gyro bias info from device")
             elif event == self.DID_BUDGRV:
-                quaternion = []
+                
                 payload = data[5:len(data) - 3]
-                for i in range(0, 4):
-                    quaternion.append((self.__extract_data(payload, i * 2, 2, False) / 10000.0))
-                if self.data_cb is not None:
-                    self.data_cb(quaternion)
+                input =  payload[:-1]
+                if len(input)==8:
+                    quaternion =[ one/10000.0 for one in struct.unpack('hhhh', payload[:-1])]
+                    if self.data_cb is not None:
+                        self.data_cb(quaternion)
+                else:
+                    if self.verbose:
+                        print("diff length: ", len(input))
+                
+
+                
 
