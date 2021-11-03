@@ -19,12 +19,13 @@ class BluetoothService:
         self.message_cb = message_callback
         self.debug = debug
         self.socket = socket
+        self.isDisposing = False
         self.thread = Thread(target=self.__run)
         self.thread.start()
 
     def __run(self):
         try:
-            while True:
+            while not self.isDisposing:
                 data = self.socket.recv(1024)
                 if len(data) == 0:
                     continue
@@ -47,6 +48,10 @@ class BluetoothService:
 
     def __totalPacketSize(self, payload_length):
         return self.__size(payload_length) + (self.MSG_SIZE_MARKER * 2) + self.MSG_SIZE_TYPE + self.MSG_SIZE_BYTES
+
+    def close(self):
+        self.isDisposing = True
+        self.socket.close()
 
     def sendPacket(self, msg_id, payload, is_response=False, is_fragment=False):
         b = bytearray(self.__totalPacketSize(len(payload)))

@@ -3,6 +3,7 @@ from RepeatedTimer import RepeatedTimer
 
 import struct
 
+
 class SpatialSensorManager:
     def __init__(self, socket, data_callback, verbose=False, debug=False):
         # Constants
@@ -73,17 +74,13 @@ class SpatialSensorManager:
                 # For more information refer to https://github.com/ThePBone/GalaxyBudsClient/blob/master/GalaxyBudsClient/Message/Decoder/SpatialAudioDataParser.cs#L56
                 print("Received gyro bias info from device")
             elif event == self.DID_BUDGRV:
-                
+
                 payload = data[5:len(data) - 3]
-                input =  payload[:-1]
-                if len(input)==8:
-                    quaternion =[ one/10000.0 for one in struct.unpack('hhhh', payload[:-1])]
+                input = payload[:-1]
+                if len(input) == 8:
+                    quaternion = [one / 10000.0 for one in struct.unpack('hhhh', payload[:-1])]
                     if self.data_cb is not None:
-                        self.data_cb(quaternion)
+                        self.data_cb(quaternion, self)
                 else:
                     if self.verbose:
                         print("diff length: ", len(input))
-                
-
-                
-
