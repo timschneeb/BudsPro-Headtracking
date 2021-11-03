@@ -21,11 +21,14 @@ from time import process_time_ns
 timeAtLastEvent = -1
 benchmarkHistory = []
 doBenchmark = False
+doBenchmarkAfterNIterations = 0
 benchmarkCount = 100
+benchmarkIteration = 0
 
 
 def __spatial_sensor_callback(quaternion, sensor_manager):
-    global timeAtLastEvent, benchmarkHistory, doBenchmark, benchmarkCount
+    global timeAtLastEvent, benchmarkHistory, doBenchmark, benchmarkCount,\
+        benchmarkIteration, doBenchmarkAfterNIterations
     if sensor_manager.service.isDisposing:
         return
 
@@ -37,11 +40,13 @@ def __spatial_sensor_callback(quaternion, sensor_manager):
         print(f"x={quaternion[0]}, y={quaternion[1]}, z={quaternion[2]}, w={quaternion[3]}")
         return
 
-    if timeAtLastEvent >= 0:
+    if timeAtLastEvent >= 0 and benchmarkIteration >= doBenchmarkAfterNIterations:
         benchmarkHistory.append((process_time_ns() - timeAtLastEvent) / 1e+6)
 
     if len(benchmarkHistory) >= benchmarkCount - 1:
         print("====== BENCHMARK DONE ======")
+        if doBenchmarkAfterNIterations > 0:
+            print("Benchmark launched after receiving " + str(doBenchmarkAfterNIterations) + " frames")
         print("Motion frames received: " + str(len(benchmarkHistory) + 1))
         print("Average time between frames: " + str(round(sum(benchmarkHistory) / len(benchmarkHistory), 6)) + "ms")
         print("Minimum time between frames: " + str(min(benchmarkHistory)) + "ms")
@@ -49,22 +54,27 @@ def __spatial_sensor_callback(quaternion, sensor_manager):
         sensor_manager.detach()
         sensor_manager.service.close()
 
+    benchmarkIteration += 1
     timeAtLastEvent = process_time_ns()
 
 
 def main():
-    global timeAtLastEvent, benchmarkHistory, doBenchmark, benchmarkCount
+    global timeAtLastEvent, benchmarkHistory, doBenchmark, benchmarkCount, doBenchmarkAfterNIterations
     parser = argparse.ArgumentParser(description='Stream head-tracking data from the Galaxy Buds Pro')
     parser.add_argument('mac', metavar='mac-address', type=str, nargs=1,
                         help='MAC-Address of your Buds')
     parser.add_argument('-b', '--benchmark', action='store_true', help="Perform benchmark")
-    parser.add_argument('--benchmark-count', metavar="n", default=[benchmarkCount], nargs=1, type=int, help="Stop benchmark after receiving N frames")
+    parser.add_argument('--benchmark-count', metavar="n", default=[benchmarkCount], nargs=1, type=int,
+                        help="Stop benchmark after benchmarking N frames")
+    parser.add_argument('--benchmark-delay', metavar="n", default=[doBenchmarkAfterNIterations], nargs=1, type=int,
+                        help="Start benchmark after receiving N frames (to wait until the connection stabilizes)")
     parser.add_argument('-v', '--verbose', action='store_true', help="Print debug information")
     parser.add_argument('-t', '--trace', action='store_true', help="Trace Bluetooth serial traffic")
     args = parser.parse_args()
 
     doBenchmark = args.benchmark
     benchmarkCount = args.benchmark_count[0]
+    doBenchmarkAfterNIterations = args.benchmark_delay[0]
     verbose = args.verbose
     trace = args.trace
 
