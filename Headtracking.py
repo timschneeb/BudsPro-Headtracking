@@ -16,8 +16,8 @@ import sys
 import argparse
 
 from SpatialSensorManager import SpatialSensorManager
-from time import process_time_ns
 
+timeAtStart = -1
 timeAtLastEvent = -1
 benchmarkHistory = []
 doBenchmark = False
@@ -28,7 +28,7 @@ benchmarkIteration = 0
 
 def __spatial_sensor_callback(quaternion, sensor_manager):
     global timeAtLastEvent, benchmarkHistory, doBenchmark, benchmarkCount,\
-        benchmarkIteration, doBenchmarkAfterNIterations
+        benchmarkIteration, doBenchmarkAfterNIterations, timeAtStart
     if sensor_manager.service.isDisposing:
         return
 
@@ -40,22 +40,28 @@ def __spatial_sensor_callback(quaternion, sensor_manager):
         print(f"x={quaternion[0]}, y={quaternion[1]}, z={quaternion[2]}, w={quaternion[3]}")
         return
 
+    if timeAtStart < 0 and benchmarkIteration >= doBenchmarkAfterNIterations - 1:
+        timeAtStart = time.time_ns()
+
     if timeAtLastEvent >= 0 and benchmarkIteration >= doBenchmarkAfterNIterations:
-        benchmarkHistory.append((process_time_ns() - timeAtLastEvent) / 1e+6)
+        benchmarkHistory.append((time.time_ns() - timeAtLastEvent) / 1e+6)
 
     if len(benchmarkHistory) >= benchmarkCount - 1:
+        total_duration = round((time.time_ns() - timeAtStart) / 1e+9, 6)
         print("====== BENCHMARK DONE ======")
         if doBenchmarkAfterNIterations > 0:
             print("Benchmark launched after skipping " + str(doBenchmarkAfterNIterations) + " frames")
         print("Motion frames received: " + str(len(benchmarkHistory) + 1))
         print("Average time between frames: " + str(round(sum(benchmarkHistory) / len(benchmarkHistory), 6)) + "ms")
-        print("Minimum time between frames: " + str(min(benchmarkHistory)) + "ms")
-        print("Maximum time between frames: " + str(max(benchmarkHistory)) + "ms")
+        print("Minimum time between frames: " + str(round(min(benchmarkHistory), 6)) + "ms")
+        print("Maximum time between frames: " + str(round(max(benchmarkHistory), 6)) + "ms")
+        print("Total benchmark duration: " + str(total_duration) + "s")
+
         sensor_manager.detach()
         sensor_manager.service.close()
 
     benchmarkIteration += 1
-    timeAtLastEvent = process_time_ns()
+    timeAtLastEvent = time.time_ns()
 
 
 def main():
