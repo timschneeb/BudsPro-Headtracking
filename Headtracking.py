@@ -46,7 +46,7 @@ def __spatial_sensor_callback(quaternion, sensor_manager):
     if len(benchmarkHistory) >= benchmarkCount - 1:
         print("====== BENCHMARK DONE ======")
         if doBenchmarkAfterNIterations > 0:
-            print("Benchmark launched after receiving " + str(doBenchmarkAfterNIterations) + " frames")
+            print("Benchmark launched after skipping " + str(doBenchmarkAfterNIterations) + " frames")
         print("Motion frames received: " + str(len(benchmarkHistory) + 1))
         print("Average time between frames: " + str(round(sum(benchmarkHistory) / len(benchmarkHistory), 6)) + "ms")
         print("Minimum time between frames: " + str(min(benchmarkHistory)) + "ms")
@@ -67,7 +67,7 @@ def main():
     parser.add_argument('--benchmark-count', metavar="n", default=[benchmarkCount], nargs=1, type=int,
                         help="Stop benchmark after benchmarking N frames")
     parser.add_argument('--benchmark-delay', metavar="n", default=[doBenchmarkAfterNIterations], nargs=1, type=int,
-                        help="Start benchmark after receiving N frames (to wait until the connection stabilizes)")
+                        help="Start benchmark after receiving/skipping N frames (to wait until the connection stabilizes)")
     parser.add_argument('-v', '--verbose', action='store_true', help="Print debug information")
     parser.add_argument('-t', '--trace', action='store_true', help="Trace Bluetooth serial traffic")
     args = parser.parse_args()
