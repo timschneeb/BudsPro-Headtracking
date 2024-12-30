@@ -92,7 +92,7 @@ def main():
 
     port = host = None
     for match in service_matches:
-        if match["name"] == "GEARMANAGER" or match["name"] == b"GEARMANAGER" or match["name"] == b"FACTORY":
+        if match["name"] == "GEARMANAGER" or match["name"] == b"GEARMANAGER" or match["name"] == b"FACTORY" or match["name"] == "FACTORY":
             port = match["port"]
             host = match["host"]
             break
